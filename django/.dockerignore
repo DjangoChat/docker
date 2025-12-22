@@ -1,0 +1,59 @@
+# ENVIROMENT
+
+venv/
+.venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# DJANGO
+
+\*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+/media
+/staticfiles
+/static
+
+# PYTHON
+
+**pycache**/
+_.py[cod]
+_$py.class
+_.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+_.egg-info/
+.installed.cfg
+\*.egg
+MANIFEST
+
+# TESTS
+
+.pytest*cache
+htmlcov/
+.coverage
+.coverage.*
+coverage.xml
+\_.cover
+
+# UNECESARY
+
+docs/
+\*.md
+.gitignore
