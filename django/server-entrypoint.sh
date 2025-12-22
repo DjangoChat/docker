@@ -1,26 +1,18 @@
 #!/bin/sh
 
-until cd /app/backend/src
-do
-    echo "Waiting for server volume..."
-done
+set -e
 
-until python manage.py makemigrations
-do
-    echo "Creating migration files ..."
-    sleep 2
-done
+echo "Running Django migrations..."
 
-until python manage.py migrate --fake-initial
-do
-    echo "Migrating tables to database ..."
-    sleep 2
-done
+if [ "$ENV_TYPE" = "development" ]; then
+  python manage.py makemigrations --noinput
+fi
 
-until python manage.py collectstatic --noinput
-do
-    echo "Collecting static content ..."
-    sleep 2
-done
+python manage.py migrate --fake-initial --noinput
 
-exec python manage.py runserver 0.0.0.0:8000
+if [ "$ENV_TYPE" = "production" ]; then
+  python manage.py collectstatic --noinput
+fi
+
+echo "Starting server..."
+exec "$@"
