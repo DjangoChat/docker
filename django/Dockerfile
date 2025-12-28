@@ -63,6 +63,7 @@ RUN chmod +x /entrypoint.sh
 
 # Security: non-root user
 RUN useradd -m django
+RUN chown -R django:django /app
 USER django
 
 WORKDIR $APP_HOME/backend/src
