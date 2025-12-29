@@ -4,6 +4,8 @@ set -e
 
 echo "Running Django migrations..."
 
+python manage.py wait-db
+
 if [ "$ENV_TYPE" = "development" ]; then
   python manage.py makemigrations --noinput
 fi
