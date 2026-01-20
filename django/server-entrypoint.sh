@@ -31,7 +31,10 @@ fi
 # Run tests in development/test environments
 if [ "$ENV_TYPE" = "development" ] || [ "$ENV_TYPE" = "test" ]; then
   echo "Running tests with coverage..."
-  pytest --cov=apps --cov-report=term-missing --cov-report=html:htmlcov || true
+  rm -f /app/backend/.coverage
+  cd /app/backend
+  PYTHONPATH=/app/backend/src:$PYTHONPATH pytest test --cov=src/apps --cov-report=term-missing --cov-report=html:htmlcov --cov-config=.coveragerc || true
+  cd /app/backend/src
 fi
 
 echo "Starting server..."
