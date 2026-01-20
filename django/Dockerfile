@@ -49,6 +49,7 @@ FROM base AS runtime
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
        libc-dev \
+       gosu \
     && rm -rf /var/lib/apt/lists/*
 
 # Install dependencies from wheels
@@ -64,7 +65,6 @@ RUN chmod +x /entrypoint.sh
 # Security: non-root user
 RUN useradd -m django
 RUN chown -R django:django /app
-USER django
 
 WORKDIR $APP_HOME/backend/src
 
