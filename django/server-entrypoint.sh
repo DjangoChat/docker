@@ -16,7 +16,7 @@ if [ "$(id -u)" = "0" ]; then
   exec gosu django "$0" "$@"
 fi
 
-python manage.py wait-db
+python manage.py wait_db
 
 if [ "$ENV_TYPE" = "development" ]; then
   python manage.py makemigrations --noinput

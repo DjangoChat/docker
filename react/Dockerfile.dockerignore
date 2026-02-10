@@ -1,0 +1,16 @@
+# Everything by default
+*
+
+# Allow only what we need
+!services/frontend/
+!services/docker/react/
+!environment/.env.development
+
+# Exclude from allowed paths
+services/frontend/node_modules/
+services/frontend/.intlayer/
+services/frontend/dist/
+services/frontend/build/
+services/frontend/coverage/
+services/frontend/htmlcov/
+services/frontend/.git/
