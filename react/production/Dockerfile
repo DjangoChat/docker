@@ -14,19 +14,11 @@ COPY services/frontend/package.json services/frontend/package-lock.json* ./
 RUN npm install
 
 COPY services/frontend/ ./
-COPY environment/.env.development ./.env.development
-############################
-# Development target
-############################
-FROM base AS development
-
-EXPOSE 5173
-
-CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
+COPY environment/.env.production ./.env.production
 
 
 ############################
-# Build target
+# Build
 ############################
 FROM base AS build
 
@@ -37,12 +29,12 @@ RUN npm run build
 
 
 ############################
-# Production target (nginx)
+# Production (nginx)
 ############################
-FROM nginx:stable-alpine AS production
+FROM nginx:stable-alpine
 
 COPY --from=build /app/dist /usr/share/nginx/html
-COPY services/docker/react/nginx.conf /etc/nginx/conf.d/default.conf
+COPY services/docker/react/production/nginx.conf /etc/nginx/conf.d/default.conf
 
 EXPOSE 80
 

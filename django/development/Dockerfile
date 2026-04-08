@@ -28,16 +28,13 @@ RUN apt-get update \
        libc-dev \
     && rm -rf /var/lib/apt/lists/*
 
-ARG ENV_TYPE=production
-ENV ENV_TYPE=${ENV_TYPE}
-
 COPY services/backend/src/requirements/base.txt ./requirements/
-COPY services/backend/src/requirements/${ENV_TYPE}.txt ./requirements/
+COPY services/backend/src/requirements/development.txt ./requirements/
 
 RUN pip install wheel \
     && pip wheel --no-cache-dir \
        --wheel-dir /wheels \
-       -r requirements/${ENV_TYPE}.txt
+       -r requirements/development.txt
 
 
 ############################
@@ -48,7 +45,6 @@ FROM base AS runtime
 # Runtime-only system deps
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
-       libc-dev \
        gosu \
     && rm -rf /var/lib/apt/lists/*
 
@@ -59,7 +55,7 @@ RUN pip install --no-cache-dir /wheels/* \
 
 # App code
 COPY services/backend ./backend
-COPY services/docker/django/server-entrypoint.sh /entrypoint.sh
+COPY services/docker/django/development/server-entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
 # Security: non-root user
@@ -68,27 +64,7 @@ RUN chown -R django:django /app
 
 WORKDIR $APP_HOME/backend/src
 
-
-############################
-# Development target
-############################
-FROM runtime AS development
-
 EXPOSE 8000
 
 ENTRYPOINT ["/entrypoint.sh"]
 CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
-
-
-############################
-# Production target
-############################
-FROM runtime AS production
-
-EXPOSE 8000
-
-ENTRYPOINT ["/entrypoint.sh"]
-CMD ["gunicorn", "config.wsgi:application", \
-     "--bind", "0.0.0.0:8000", \
-     "--workers", "3", \
-     "--threads", "2"]
