@@ -12,8 +12,12 @@ if [ "$(id -u)" = "0" ]; then
   exec gosu django "$0" "$@"
 fi
 
+check_stripe_secret() {
+  python manage.py check_stripe_secret --timeout 20
+}
+
 check_db_running() {
-  python manage.py wait_db
+  python manage.py wait_db --timeout 20
 }
 
 running_migrations() {
@@ -42,6 +46,7 @@ running_tests() {
 }
 
 main () {
+  check_stripe_secret
   check_db_running
   running_migrations
   running_command_after_migrations
