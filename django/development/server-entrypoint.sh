@@ -39,20 +39,12 @@ running_command_after_migrations() {
   python manage.py create_period
   python manage.py create_plan
   python manage.py create_price
-  python manage.py create_nature
-  python manage.py create_agent
-  python manage.py create_policies_rules
   python manage.py create_feature
   python manage.py create_quota
   python manage.py create_quota_plan
-}
-
-running_tests() {
-  echo "Running tests with coverage..."
-  rm -f /app/backend/.coverage
-  cd /app/backend
-  PYTHONPATH=/app/backend/src:$PYTHONPATH pytest test --cov=src/apps --cov-report=term-missing --cov-report=html:htmlcov --cov-config=.coveragerc || true
-  cd /app/backend/src
+  python manage.py create_nature
+  python manage.py create_policies_rules
+  python manage.py create_participant_agent
 }
 
 main () {
