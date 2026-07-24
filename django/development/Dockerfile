@@ -45,6 +45,7 @@ FROM base AS runtime
 # Runtime-only system deps
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
+         curl \
        gosu \
     && rm -rf /var/lib/apt/lists/*
 
@@ -65,6 +66,3 @@ RUN chown -R django:django /app
 WORKDIR $APP_HOME/backend/src
 
 EXPOSE 8000
-
-ENTRYPOINT ["/entrypoint.sh"]
-CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
