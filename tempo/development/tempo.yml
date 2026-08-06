@@ -1,0 +1,33 @@
+server:
+  http_listen_port: 3200
+  grpc_listen_port: 4317
+  grpc_listen_address: "0.0.0.0"
+  http_listen_address: "0.0.0.0"
+
+distributor:
+  ring:
+    kvstore:
+      store: inmemory
+
+storage:
+  trace:
+    backend: local
+    local:
+      path: /var/tempo/blocks
+    wal:
+      path: /var/tempo/wal
+
+querier:
+  max_concurrent_queries: 20
+
+query_frontend: {}
+
+metrics_generator:
+  ring:
+    kvstore:
+      store: inmemory
+  storage:
+    path: /var/tempo/wal/metrics-generator
+  processor:
+    service_graphs: {}
+    span_metrics: {}

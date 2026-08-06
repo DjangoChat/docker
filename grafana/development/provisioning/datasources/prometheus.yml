@@ -8,3 +8,33 @@ datasources:
     access: proxy
     url: http://prometheus:9090
     isDefault: true
+    editable: true
+
+  - name: Loki
+    version: 1
+    uid: my-loki-ds
+    type: loki
+    access: proxy
+    url: http://loki:3100
+    editable: true
+
+  - name: Tempo
+    version: 1
+    uid: my-tempo-ds
+    type: tempo
+    access: proxy
+    url: http://tempo:3200
+    editable: true
+    jsonData:
+      tracesToMetricsV2:
+        datasourceUid: my-prometheus-ds
+        tags:
+          - job
+          - instance
+      tracesToLogsV2:
+        datasourceUid: my-loki-ds
+        spanStartTimeShift: now
+        spanEndTimeShift: now
+        tags:
+          - job
+          - instance

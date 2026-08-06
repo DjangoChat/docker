@@ -1,0 +1,69 @@
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+  hostmetrics:
+    collection_interval: 60s
+    scrapers:
+      cpu:
+      memory:
+      disk:
+      filesystem:
+      network:
+      paging:
+      processes:
+      load:
+
+processors:
+  batch:
+
+exporters:
+  debug:
+    verbosity: detailed
+
+  # Tempo exporter for traces
+  otlp:
+    endpoint: tempo:4317
+    tls:
+      insecure: true
+
+  # Loki exporter for logs
+  otlphttp/loki:
+    endpoint: http://loki:3100/otlp
+    tls:
+      insecure: true
+
+  # Prometheus exporter for metrics
+  prometheusremotewrite:
+    endpoint: "http://prometheus:9090/api/v1/write"
+    tls:
+      insecure: true
+    retry_on_failure:
+      enabled: true
+      initial_interval: 5s
+      max_interval: 30s
+      max_elapsed_time: 300s
+    sending_queue:
+      enabled: true
+      num_consumers: 10
+      queue_size: 1000
+
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [debug, otlp]
+
+    metrics:
+      receivers: [otlp, hostmetrics]
+      processors: [batch]
+      exporters: [debug, prometheusremotewrite]
+
+    logs:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [debug, otlphttp/loki]
