@@ -46,12 +46,14 @@ exporters:
       initial_interval: 5s
       max_interval: 30s
       max_elapsed_time: 300s
-    sending_queue:
-      enabled: true
-      num_consumers: 10
-      queue_size: 1000
+
+extensions:
+  health_check:
+    endpoint: 0.0.0.0:13133
 
 service:
+  extensions: [health_check]
+
   pipelines:
     traces:
       receivers: [otlp]
