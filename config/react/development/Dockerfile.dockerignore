@@ -1,0 +1,15 @@
+# Everything by default
+*
+
+# Allow only what we need
+!frontend/
+!docker/config/react/
+
+# Exclude from allowed paths
+frontend/node_modules/
+frontend/.intlayer/
+frontend/dist/
+frontend/build/
+frontend/coverage/
+frontend/htmlcov/
+frontend/.git/

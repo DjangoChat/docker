@@ -1,0 +1,59 @@
+networks:
+  platform:
+    driver: bridge
+
+volumes:
+  static_volume: {}
+  postgres_data: {}
+  redis_data: {}
+
+services:
+  web:
+    container_name: platform_django
+    networks:
+      - platform
+
+  frontend:
+    container_name: platform_react
+    networks:
+      - platform
+
+  db:
+    image: postgres:16-alpine
+    container_name: platform_postgresql
+    networks:
+      - platform
+
+  redis:
+    image: redis:7
+    container_name: platform_redis
+    networks:
+      - platform
+
+  rabbitmq:
+    image: rabbitmq:3.13-management-alpine
+    container_name: platform_rabbitmq
+    networks:
+      - platform
+
+  celery-worker:
+    container_name: platform_celery_worker
+    networks:
+      - platform
+
+  celery-beat:
+    container_name: platform_celery_beat
+    networks:
+      - platform
+
+  flower:
+    image: mher/flower:latest
+    container_name: platform_flower
+
+  # ollama:
+  #   image: ollama/ollama
+  #   container_name: platform_ollama
+  #   ports:
+  #     - "11434:11434"
+  #   volumes:
+  #     - ollama_data:/root/.ollama

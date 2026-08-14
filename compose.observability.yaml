@@ -1,0 +1,100 @@
+volumes:
+  prometheus_data: {}
+  grafana_data: {}
+  tempo_data: {}
+  loki_data: {}
+
+services:
+  postgres-exporter:
+    environment:
+      DATA_SOURCE_NAME: "postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?sslmode=disable"
+    ports:
+      - "9187:9187"
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - platform
+
+  redis-exporter:
+    environment:
+      REDIS_ADDR: redis://redis:6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+    ports:
+      - "9121:9121"
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - platform
+
+  prometheus:
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./config/prometheus/development/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    depends_on:
+      web:
+        condition: service_healthy
+    networks:
+      - platform
+
+  grafana:
+    user: root
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./config/grafana/development/provisioning:/etc/grafana/provisioning
+      - ./config/grafana/development/dashboards:/var/lib/grafana/dashboards
+    depends_on:
+      otel-collector:
+        condition: service_started
+    networks:
+      - platform
+
+  otel-collector:
+    ports:
+      - "4319:4317" # OTLP gRPC receiver
+      - "4318:4318" # OTLP HTTP receiver
+      - 8888:8888 # Prometheus metrics exposed by the Collector
+      - 8889:8889 # Prometheus exporter metrics
+      - "13133:13133" # Health check extension
+    volumes:
+      - ./config/otel-collector/development/otel-collector-config.yaml:/etc/otelcol-contrib/config.yaml
+    depends_on:
+      prometheus:
+        condition: service_healthy
+      loki:
+        condition: service_healthy
+    networks:
+      - platform
+
+  tempo:
+    ports:
+      - "3200:3200"
+    volumes:
+      - tempo_data:/var/tempo
+      - ./config/tempo/development/tempo.yml:/etc/tempo.yaml
+    depends_on:
+      web:
+        condition: service_healthy
+      prometheus:
+        condition: service_healthy
+    networks:
+      - platform
+
+  loki:
+    ports:
+      - "3100:3100"
+    volumes:
+      - loki_data:/loki
+      - ./config/loki/development/loki-config.yml:/etc/loki/local-config.yaml
+    depends_on:
+      web:
+        condition: service_healthy
+      prometheus:
+        condition: service_healthy
+    networks:
+      - platform

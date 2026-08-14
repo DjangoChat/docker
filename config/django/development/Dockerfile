@@ -28,8 +28,8 @@ RUN apt-get update \
        libc-dev \
     && rm -rf /var/lib/apt/lists/*
 
-COPY services/backend/src/requirements/base.txt ./requirements/
-COPY services/backend/src/requirements/development.txt ./requirements/
+COPY backend/src/requirements/base.txt ./requirements/
+COPY backend/src/requirements/development.txt ./requirements/
 
 RUN pip install wheel \
     && pip wheel --no-cache-dir \
@@ -45,8 +45,8 @@ FROM base AS runtime
 # Runtime-only system deps
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
-         curl \
-       gosu \
+    curl \
+    gosu \
     && rm -rf /var/lib/apt/lists/*
 
 # Install dependencies from wheels
@@ -55,8 +55,8 @@ RUN pip install --no-cache-dir /wheels/* \
     && rm -rf /wheels
 
 # App code
-COPY services/backend ./backend
-COPY services/docker/django/development/server-entrypoint.sh /entrypoint.sh
+COPY backend ./backend
+COPY docker/config/django/development/server-entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
 # Security: non-root user

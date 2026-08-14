@@ -9,11 +9,11 @@ ENV APP_HOME=/app
 
 WORKDIR $APP_HOME
 
-COPY services/frontend/package.json services/frontend/package-lock.json ./
+COPY frontend/package.json frontend/package-lock.json ./
 
 RUN npm ci
 
-COPY services/frontend/ ./frontend
+COPY frontend/ ./frontend
 
 ############################
 # Build
@@ -33,7 +33,7 @@ RUN npm run build
 FROM nginx:stable-alpine
 
 COPY --from=build /app/frontend/dist /usr/share/nginx/html
-COPY services/docker/react/development/nginx.conf /etc/nginx/conf.d/default.conf
+COPY docker/config/react/development/nginx.conf /etc/nginx/conf.d/default.conf
 
 EXPOSE 80
 
