@@ -8,6 +8,7 @@ services:
       context: ..
       dockerfile: ./docker/config/django/development/Dockerfile
     entrypoint: ["/entrypoint.sh"]
+    command: ["python", "manage.py", "runserver", "0.0.0.0:8000"]
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health/"]
       interval: 60s
@@ -15,8 +16,8 @@ services:
       retries: 3
       start_period: 10s
     volumes:
+      - ../backend:/app/backend
       - static_volume:/app/backend/src/mediafields
-      - ../services/backend/htmlcov:/app/backend/htmlcov
       - stripe-secrets:/stripe-secrets
     ports:
       - "8000:8000"
@@ -32,10 +33,6 @@ services:
       redis:
         condition: service_healthy
       rabbitmq:
-        condition: service_healthy
-      celery-worker:
-        condition: service_healthy
-      celery-beat:
         condition: service_healthy
       stripe-cli:
         condition: service_healthy
@@ -93,15 +90,15 @@ services:
       - ./env/rabbitmq.env
 
   celery-worker:
+    image: platoform-django-dev
     build:
       context: ..
       dockerfile: ./docker/config/django/development/Dockerfile
+    entrypoint: ["/entrypoint-worker.sh"]
     volumes:
+      - ../backend:/app/backend
       - static_volume:/app/backend/src/mediafields
-      - ../backend/htmlcov:/app/backend/htmlcov
       - stripe-secrets:/stripe-secrets
-    command:
-      ["sh", "-c", "celery -A config worker --loglevel=info --concurrency=1"]
     healthcheck:
       test: ["CMD", "celery", "-A", "config", "inspect", "active"]
       interval: 5s
@@ -116,14 +113,15 @@ services:
       - ./env/stripe.env
 
   celery-beat:
+    image: platoform-django-dev
     build:
       context: ..
       dockerfile: ./docker/config/django/development/Dockerfile
+    entrypoint: ["/entrypoint-beat.sh"]
     volumes:
+      - ../backend:/app/backend
       - static_volume:/app/backend/src/mediafields
-      - ../backend/htmlcov:/app/backend/htmlcov
       - stripe-secrets:/stripe-secrets
-    command: ["sh", "-c", "celery -A config beat --loglevel=info"]
     healthcheck:
       test: ["CMD", "celery", "-A", "config", "inspect", "active"]
       interval: 5s
@@ -138,22 +136,27 @@ services:
       - ./env/stripe.env
 
   flower:
+    image: platoform-django-dev
+    build:
+      context: ..
+      dockerfile: ./docker/config/django/development/Dockerfile
+    entrypoint: ["/entrypoint-flower.sh"]
     ports:
       - "5555:5555"
     volumes:
+      - ../backend:/app/backend
       - static_volume:/app/backend/src/mediafields
-      - ../backend/htmlcov:/app/backend/htmlcov
-    depends_on:
-      rabbitmq:
-        condition: service_healthy
-    command:
-      ["sh", "-c", "celery -A config flower --address=0.0.0.0 --port=5555"]
     env_file:
       - ./env/django.env
       - ./env/postgresql.env
       - ./env/rabbitmq.env
       - ./env/redis.env
       - ./env/stripe.env
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
 
   stripe-cli:
     build:

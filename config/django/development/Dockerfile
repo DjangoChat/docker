@@ -1,5 +1,3 @@
-# syntax=docker/dockerfile:1.7
-
 ############################
 # Base Python image
 ############################
@@ -8,9 +6,10 @@ FROM python:3.12-slim-bookworm AS base
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=on \
-    APP_HOME=/app
+    APP_HOME=/app \
+    PYTHONPATH=/app/backend/src
 
-WORKDIR $APP_HOME
+WORKDIR $APP_HOME/backend/src
 
 RUN pip install --upgrade pip
 
@@ -54,15 +53,11 @@ COPY --from=builder /wheels /wheels
 RUN pip install --no-cache-dir /wheels/* \
     && rm -rf /wheels
 
-# App code
-COPY backend ./backend
+# Entrypoint scripts
 COPY docker/config/django/development/server-entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
-
-# Security: non-root user
-RUN useradd -m django
-RUN chown -R django:django /app
-
-WORKDIR $APP_HOME/backend/src
+COPY docker/config/celery/development/worker-entrypoint.sh /entrypoint-worker.sh
+COPY docker/config/celery/development/beat-entrypoint.sh /entrypoint-beat.sh
+COPY docker/config/celery/development/flower-entrypoint.sh /entrypoint-flower.sh
+RUN chmod +x /entrypoint.sh /entrypoint-worker.sh /entrypoint-beat.sh /entrypoint-flower.sh
 
 EXPOSE 8000

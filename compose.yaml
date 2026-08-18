@@ -49,6 +49,8 @@ services:
   flower:
     image: mher/flower:latest
     container_name: platform_flower
+    networks:
+      - platform
 
   # ollama:
   #   image: ollama/ollama

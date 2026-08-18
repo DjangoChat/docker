@@ -2,10 +2,12 @@
 
 set -e
 
+# For mounted volumes in development, run as root to avoid permission issues
+# In production, the container runs as 'django' user (see Dockerfile)
 if [ "$(id -u)" = "0" ]; then
     mkdir -p /app/backend/htmlcov
-    chown -R django:django /app/backend
-    exec gosu django "$0" "$@"
+    chmod -R 777 /app/backend || true
+    # Don't drop to django user for dev - run commands as root
 fi
 
 check_db_running() {
@@ -15,6 +17,7 @@ check_db_running() {
 
 run_migrations() {
     echo "Running Django migrations..."
+    python manage.py makemigrations
     python manage.py migrate --noinput
 }
 
