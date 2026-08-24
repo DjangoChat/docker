@@ -1,6 +1,7 @@
 volumes:
   stripe-config: {}
   stripe-secrets: {}
+  hf-cache: {}
 
 services:
   web:
@@ -43,7 +44,10 @@ services:
       context: ..
       dockerfile: ./docker/config/react/development/Dockerfile
     ports:
-      - "5173:80"
+      - "5173:5173"
+    volumes:
+      - ../frontend:/app/frontend
+      - /app/frontend/node_modules
 
   db:
     volumes:
@@ -95,6 +99,7 @@ services:
       context: ..
       dockerfile: ./docker/config/django/development/Dockerfile
     entrypoint: ["/entrypoint-worker.sh"]
+    mem_limit: 512m
     volumes:
       - ../backend:/app/backend
       - static_volume:/app/backend/src/mediafields
@@ -111,6 +116,38 @@ services:
       - ./env/rabbitmq.env
       - ./env/redis.env
       - ./env/stripe.env
+
+  celery-worker-ml:
+    image: platoform-django-dev
+    build:
+      context: ..
+      dockerfile: ./docker/config/django/development/Dockerfile
+    entrypoint: ["/entrypoint-worker-ml.sh"]
+    mem_limit: 3g
+    volumes:
+      - ../backend:/app/backend
+      - static_volume:/app/backend/src/mediafields
+      - stripe-secrets:/stripe-secrets
+      - hf-cache:/root/.cache/huggingface
+    healthcheck:
+      test: ["CMD", "celery", "-A", "config", "inspect", "active"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    env_file:
+      - ./env/django.env
+      - ./env/postgresql.env
+      - ./env/rabbitmq.env
+      - ./env/redis.env
+      - ./env/stripe.env
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
 
   celery-beat:
     image: platoform-django-dev

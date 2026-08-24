@@ -2,9 +2,6 @@
 
 set -e
 
-# Celery Worker Entrypoint
-# Runs Celery worker with configured settings for development
-
 if [ "$(id -u)" = "0" ]; then
     mkdir -p /app/backend/htmlcov
     chmod -R 777 /app/backend || true
@@ -16,8 +13,13 @@ check_db_running() {
 }
 
 start_worker() {
-    echo "Starting Celery worker..."
-    exec python -m celery -A config worker --loglevel=info --concurrency=1 "$@"
+    echo "Starting Celery worker (queue=default, concurrency=2)..."
+    exec python -m celery -A config worker \
+        --loglevel=info \
+        --concurrency=2 \
+        --queues=default \
+        --hostname=default-worker@%h \
+        "$@"
 }
 
 main() {

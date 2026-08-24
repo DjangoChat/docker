@@ -6,6 +6,7 @@ volumes:
   static_volume: {}
   postgres_data: {}
   redis_data: {}
+  hf-cache: {}
 
 services:
   web:
@@ -38,6 +39,11 @@ services:
 
   celery-worker:
     container_name: platform_celery_worker
+    networks:
+      - platform
+
+  celery-worker-ml:
+    container_name: platform_celery_worker_ml
     networks:
       - platform
 

@@ -56,8 +56,9 @@ RUN pip install --no-cache-dir /wheels/* \
 # Entrypoint scripts
 COPY docker/config/django/development/server-entrypoint.sh /entrypoint.sh
 COPY docker/config/celery/development/worker-entrypoint.sh /entrypoint-worker.sh
+COPY docker/config/celery/development/worker-ml-entrypoint.sh /entrypoint-worker-ml.sh
 COPY docker/config/celery/development/beat-entrypoint.sh /entrypoint-beat.sh
 COPY docker/config/celery/development/flower-entrypoint.sh /entrypoint-flower.sh
-RUN chmod +x /entrypoint.sh /entrypoint-worker.sh /entrypoint-beat.sh /entrypoint-flower.sh
+RUN chmod +x /entrypoint.sh /entrypoint-worker.sh /entrypoint-worker-ml.sh /entrypoint-beat.sh /entrypoint-flower.sh
 
 EXPOSE 8000

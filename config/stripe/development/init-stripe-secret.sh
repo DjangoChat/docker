@@ -8,7 +8,7 @@ set -e
 echo "Starting Stripe CLI and capturing webhook secret..."
 
 # Run stripe-cli and capture output
-stripe listen --api-key "$STRIPE_API_KEY" --events customer.subscription.created,customer.subscription.updated,customer.subscription.deleted --forward-to web:8000/api/v1/stripes/webhook/ --skip-verify 2>&1 | while IFS= read -r line; do
+stripe listen --api-key "$STRIPE_API_KEY" --events customer.subscription.created,customer.subscription.updated,customer.subscription.deleted --forward-to web:8000/api/v1/stripe/webhook/ --skip-verify 2>&1 | while IFS= read -r line; do
   echo "$line"
   
   # Extract webhook secret from the output
