@@ -3,6 +3,10 @@ volumes:
   stripe-secrets: {}
   hf-cache: {}
   ollama_models: {}
+  langfuse_postgres_data: {}
+  langfuse_clickhouse_data: {}
+  langfuse_clickhouse_logs: {}
+  langfuse_minio_data: {}
 
 services:
   web:
@@ -29,6 +33,7 @@ services:
       - ./env/rabbitmq.env
       - ./env/redis.env
       - ./env/stripe.env
+      - ./env/langfuse.env
     depends_on:
       db:
         condition: service_healthy
@@ -39,6 +44,8 @@ services:
       stripe-cli:
         condition: service_healthy
       ollama:
+        condition: service_healthy
+      langfuse-web:
         condition: service_healthy
 
   frontend:
@@ -75,7 +82,10 @@ services:
     ports:
       - "6379:6379"
     entrypoint: ["sh", "-c"]
-    command: ['redis-server --requirepass "$$REDIS_PASSWORD"']
+    command:
+      [
+        'redis-server --requirepass "$$REDIS_PASSWORD" --maxmemory-policy noeviction',
+      ]
     healthcheck:
       test: ["CMD-SHELL", 'redis-cli -a "$$REDIS_PASSWORD" --raw incr ping']
       interval: 5s
@@ -235,3 +245,103 @@ services:
       timeout: 5s
       retries: 5
       start_period: 15s
+
+  clickhouse:
+    image: clickhouse/clickhouse-server:latest
+    container_name: platform_clickhouse
+    ports:
+      - "8123:8123"
+      - "9000:9000"
+      - "9009:9009"
+    volumes:
+      - langfuse_clickhouse_data:/var/lib/clickhouse
+      - langfuse_clickhouse_logs:/var/log/clickhouse-server
+    environment:
+      CLICKHOUSE_DB: default
+      CLICKHOUSE_USER: default
+      CLICKHOUSE_PASSWORD: changeme
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8123/?query=SELECT%201"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    networks:
+      - platform
+
+  minio:
+    image: minio/minio:latest
+    container_name: platform_minio
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+      - "9090:9090"
+    volumes:
+      - langfuse_minio_data:/data
+    environment:
+      MINIO_ROOT_USER: minio
+      MINIO_ROOT_PASSWORD: miniosecret
+    command: server /data --console-address ":9001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    networks:
+      - platform
+
+  langfuse-web:
+    image: ghcr.io/langfuse/langfuse:latest
+    container_name: platform_langfuse_web
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: development
+    env_file:
+      - ./env/langfuse.env
+    depends_on:
+      db:
+        condition: service_healthy
+      clickhouse:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    networks:
+      - platform
+
+  langfuse-worker:
+    image: ghcr.io/langfuse/langfuse-worker:latest
+    container_name: platform_langfuse_worker
+    environment:
+      NODE_ENV: development
+      PORT: "3030"
+    env_file:
+      - ./env/langfuse.env
+    depends_on:
+      db:
+        condition: service_healthy
+      clickhouse:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+      langfuse-web:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3030/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    networks:
+      - platform
