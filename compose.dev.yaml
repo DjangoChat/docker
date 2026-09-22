@@ -115,7 +115,8 @@ services:
       context: ..
       dockerfile: ./docker/config/django/development/Dockerfile
     entrypoint: ["/entrypoint-worker.sh"]
-    mem_limit: 512m
+    restart: unless-stopped
+    mem_limit: 1g
     volumes:
       - ../backend:/app/backend
       - static_volume:/app/backend/src/mediafields
@@ -140,6 +141,7 @@ services:
       dockerfile: ./docker/config/django/development/Dockerfile
     entrypoint: ["/entrypoint-worker-ml.sh"]
     mem_limit: 3g
+    restart: unless-stopped
     volumes:
       - ../backend:/app/backend
       - static_volume:/app/backend/src/mediafields
@@ -291,6 +293,22 @@ services:
     networks:
       - platform
 
+  minio-init:
+    image: quay.io/minio/mc:latest
+    container_name: platform_minio_init
+    depends_on:
+      minio:
+        condition: service_healthy
+    restart: "no"
+    entrypoint:
+      - /bin/sh
+      - -c
+      - >
+        mc alias set local http://minio:9000 minio miniosecret &&
+        mc mb --ignore-existing local/langfuse
+    networks:
+      - platform
+
   langfuse-web:
     image: ghcr.io/langfuse/langfuse:latest
     container_name: platform_langfuse_web
@@ -309,6 +327,8 @@ services:
         condition: service_healthy
       minio:
         condition: service_healthy
+      minio-init:
+        condition: service_completed_successfully
     healthcheck:
       test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:3000/api/public/health"]
       interval: 15s
@@ -335,6 +355,8 @@ services:
         condition: service_healthy
       minio:
         condition: service_healthy
+      minio-init:
+        condition: service_completed_successfully
       langfuse-web:
         condition: service_healthy
     healthcheck:
